@@ -133,7 +133,7 @@ export function Page() {
         {imageUrls.length > 0 && (
           imageUrls.map((url, index) => (
             <img key={index} src={url} alt={`Generated Image ${index + 1}`} className="w-full h-auto" />
-          ))s
+          ))
         )}
       </div>
     </div>
