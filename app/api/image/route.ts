@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
-import { generateImage } from "@/lib/replicate"
+import { generatePrediction } from "@/lib/replicate"
 
 export async function POST(request: NextRequest){
     try{
-        // here we are getting the input from the user
-        const { prompt, numOutputs, aspectRatio, outputFormat } = await request.json();
+        const body = await request.json();
+        const { prompt, numOutputs, aspectRatio, outputFormat } = body;
         console.log("Received request data:", { prompt, numOutputs, aspectRatio, outputFormat });
 
-        // generating the image by passing the input to the replicate api
-        const imageUrls:any = await generateImage(prompt, numOutputs, aspectRatio, outputFormat);
-        console.log("Generated Image URLs:", imageUrls);
+        const prediction = await generatePrediction(prompt, numOutputs, aspectRatio, outputFormat);
+        console.log("Generated Prediction:", prediction);
 
-        // return the response
-        return NextResponse.json({ imageUrls });
+        return NextResponse.json(prediction);
     } catch (error) {
-        console.error('Error in API route:', error);
-        return NextResponse.json({ error: 'Failed to generate image' }, { status: 500 });
+        console.error('Error in API route /api/image:', error);
+        return NextResponse.json({ error: 'Error in API route /api/image:' }, { status: 500 });
     }
 }

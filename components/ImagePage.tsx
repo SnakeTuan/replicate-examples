@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import Image from 'next/image'
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 export function Page() {
   //image generation state
   const [prompt, setPrompt] = useState('')
@@ -22,7 +24,6 @@ export function Page() {
     setError('')
     setIsLoading(true)
 
-    try {
       const response = await fetch('/api/image', {
         method: 'POST',
         headers: {
@@ -31,21 +32,30 @@ export function Page() {
         body: JSON.stringify({ prompt, numOutputs, aspectRatio, outputFormat })
       })
 
-      // here we are getting the response from the api
-      const data = await response.json()
-      console.log("API Response Data:", data)
-      console.log("API Response Data.imageUrls:", data.imageUrls)
-
-      if (response.ok) {
-        setImageUrls(data.imageUrls);
-      } else {
-        setError(data.error || 'Failed to generate image');
+      if(!response.ok){
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate image');
       }
+      
+      let data = await response.json();
 
-    } catch (error) {
-      console.error('Error generating image:', error)
-      setError('Failed to generate image, something went wrong!')
-    } 
+      while(data.status !== "succeeded" && data.status !== "failed"){
+        await sleep(1000);
+        const response = await fetch('/api/image/' + data.id);
+
+        if(!response.ok){
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch image');
+        }
+
+        data = await response.json();
+
+        if(data.status === "failed"){
+          throw new Error(data.error || 'Failed to generate image');
+        }
+      }
+      
+      setImageUrls(data.output);
 
     // setPrompt('')
     setIsLoading(false)
@@ -122,8 +132,8 @@ export function Page() {
       <div className="grid grid-cols-2 gap-4 mt-8">
         {imageUrls.length > 0 && (
           imageUrls.map((url, index) => (
-            <Image key={index} src={url} alt={`Generated Image ${index + 1}`} className="w-full h-auto" />
-          ))
+            <img key={index} src={url} alt={`Generated Image ${index + 1}`} className="w-full h-auto" />
+          ))s
         )}
       </div>
     </div>
