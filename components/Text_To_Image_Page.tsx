@@ -24,38 +24,34 @@ export function Page() {
     setError('')
     setIsLoading(true)
 
-      const response = await fetch('/api/image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ prompt, numOutputs, aspectRatio, outputFormat })
-      })
-
+    const response = await fetch('/api/image', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ prompt, numOutputs, aspectRatio, outputFormat })
+    })
+    if(!response.ok){
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to generate image');
+    }
+    
+    let data = await response.json();
+    while(data.status !== "succeeded" && data.status !== "failed"){
+      await sleep(1000);
+      const response = await fetch('/api/image/' + data.id);
       if(!response.ok){
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate image');
+        throw new Error(errorData.error || 'Failed to fetch image');
       }
-      
-      let data = await response.json();
-
-      while(data.status !== "succeeded" && data.status !== "failed"){
-        await sleep(1000);
-        const response = await fetch('/api/image/' + data.id);
-
-        if(!response.ok){
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to fetch image');
-        }
-
-        data = await response.json();
-
-        if(data.status === "failed"){
-          throw new Error(data.error || 'Failed to generate image');
-        }
-      }
-      
+      data = await response.json();
+    }
+    if(data.status === "failed"){
+      throw new Error(data.error || 'Failed to generate image');
+    }
+    else{
       setImageUrls(data.output);
+    }
 
     // setPrompt('')
     setIsLoading(false)

@@ -21,10 +21,8 @@ export default function RootLayout({
             <nav className="container mx-auto">
               <ul className="flex space-x-4">
                 <li><Link href="/" className="hover:text-gray-300">Home</Link></li>
-                <li><Link href="/Conversation" className="hover:text-gray-300">Conversation</Link></li>
-                <li><Link href="/Image" className="hover:text-gray-300">Image</Link></li>
-                <li><Link href="/Music" className="hover:text-gray-300">Music</Link></li>
-                <li><Link href="/Video" className="hover:text-gray-300">Video</Link></li>
+                <li><Link href="/text-to-image" className="hover:text-gray-300">Text to Image</Link></li>
+                <li><Link href="/image-to-image" className="hover:text-gray-300">Image to Image</Link></li>
               </ul>
             </nav>
           </header>

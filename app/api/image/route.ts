@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { generatePrediction } from "@/lib/replicate"
+import { textToImage } from "@/lib/replicate"
 
 export async function POST(request: NextRequest){
     try{
@@ -7,7 +7,7 @@ export async function POST(request: NextRequest){
         const { prompt, numOutputs, aspectRatio, outputFormat } = body;
         console.log("Received request data:", { prompt, numOutputs, aspectRatio, outputFormat });
 
-        const prediction = await generatePrediction(prompt, numOutputs, aspectRatio, outputFormat);
+        const prediction = await textToImage(prompt, numOutputs, aspectRatio, outputFormat);
         console.log("Generated Prediction:", prediction);
 
         return NextResponse.json(prediction);
