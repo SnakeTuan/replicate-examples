@@ -15,9 +15,23 @@ export function Page() {
   const [outputFormat, setOutputFormat] = useState('webp')
 
   //image generation state
-  const [imageUrls, setImageUrls] = useState([])
+  const [imageUrls, setImageUrls] = useState(['https://replicate.delivery/yhqm/VXmSo78yCJpFJpWfopqkEewhzCLtSIhxzMG4L7fp5Ph8fbaOB/out-0.jpg'])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  // State for modal view
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+
+  const handleDownload = async (url: string) => {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const new_url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = new_url;
+    a.download = 'image';
+    document.body.appendChild(a);
+    a.click();
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -125,13 +139,47 @@ export function Page() {
 
       {error && <p className="text-red-500">{error}</p>}
 
-      <div className="grid grid-cols-2 gap-4 mt-8">
-        {imageUrls.length > 0 && (
-          imageUrls.map((url, index) => (
-            <img key={index} src={url} alt={`Generated Image ${index + 1}`} className="w-full h-auto" />
-          ))
-        )}
-      </div>
+      {imageUrls.length > 0 && (
+        <div className="flex flex-row gap-4 mt-8">
+          {imageUrls.map((url, index) => (
+            <div key={index} className="relative">
+              <Image src={url} alt={`Generated_${index + 1}`}
+                height={300}
+                width={300}
+                className="object-cover rounded cursor-pointer"
+                onClick={() => setSelectedImage(url)}
+              />
+              <button
+                onClick={() => handleDownload(url)}
+                className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded"
+              >
+                Download
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {selectedImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
+          <div className="relative">
+            <Image
+              src={selectedImage}
+              alt="Enlarged Image"
+              width={600}
+              height={600}
+              className="object-contain rounded"
+            />
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute top-2 right-2 bg-white bg-opacity-75 text-black px-2 py-1 rounded"
+            >
+              X
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

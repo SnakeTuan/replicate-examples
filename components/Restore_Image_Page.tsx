@@ -2,19 +2,15 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import Image from 'next/image'
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export function Page() {
   //image generation state
-  const [prompt, setPrompt] = useState('')
-  const [style, setStyle] = useState('Photographic (Default)')
-  const [inputImages, setInputImages] = useState<File|null>(null)
+  const [inputImage, setInputImage] = useState<File|null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
-  const [numOutputs, setNumOutputs] = useState(1)
-  const [imageUrls, setImageUrls] = useState([])
+  const [imageUrl, setImageUrl] = useState<string|null>(null)
   //loading state + error state
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -36,13 +32,12 @@ export function Page() {
   const handleInputImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     if(e.target.files && e.target.files.length > 0){
       const file = e.target.files[0]
-      setInputImages(file)
+      setInputImage(file)
       const preview = URL.createObjectURL(file)
       setImagePreview(preview)
     }
   }
 
-  // Utility function to convert File to Base64
   const convertFileToBase64 = (file: File): Promise<string> => {
     return new Promise<string>((resolve, reject) => {
       const reader = new FileReader()
@@ -62,15 +57,16 @@ export function Page() {
     e.preventDefault()
     setError('')
     setIsLoading(true)
-    
     try{
-      if(!inputImages){
+      if(!inputImage){
         throw new Error('No input image selected')
       }
-      const base64Images = await convertFileToBase64(inputImages);
-      const response = await fetch('/api/image-to-image/', {
+      const base64Image = await convertFileToBase64(inputImage)
+      const response = await fetch('/api/restore-image/', {
         method: 'POST',
-        body: JSON.stringify({ prompt, style, inputImages: base64Images, numOutputs })
+        body: JSON.stringify({
+          img: base64Image
+        })
       })
   
       if(!response.ok){
@@ -82,7 +78,7 @@ export function Page() {
   
       while(data.status !== "succeeded" && data.status !== "failed"){
         await sleep(1000);
-        const response = await fetch('/api/image-to-image/' + data.id);
+        const response = await fetch('/api/restore-image/' + data.id);
   
         if(!response.ok){
           const errorData = await response.json();
@@ -96,7 +92,7 @@ export function Page() {
         throw new Error(data.error || 'Failed to generate image');
       }
       else{
-        setImageUrls(data.output);
+        setImageUrl(data.output);
       }
     
     } catch (error: any) {
@@ -108,52 +104,9 @@ export function Page() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Image to Image Generator</h1>
+      <h1 className="text-2xl font-bold mb-4">Restore image</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-
-        <Input
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Prompt for image generation... (must contain the word 'img')"
-          className="w-full"
-          required
-        />
-
-        <div className="space-y-2">
-          <label className="block text-sm font-medium">Output number</label>
-          <select
-            value={numOutputs}
-            onChange={(e) => setNumOutputs(Number(e.target.value))}
-            className="w-full border rounded-md p-2"
-          >
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-          </select>
-        </div>
-
-        <div className="space-y-2">
-          <label className="block text-sm font-medium">Style</label>
-          <select
-            value={style}
-            onChange={(e) => setStyle(e.target.value)}
-            className="w-full border rounded-md p-2"
-          >
-            <option value="Photographic (Default)">Photographic</option>
-            <option value="Line art">Line art</option>
-            <option value="Lowpoly">Lowpoly</option>
-            <option value="Comic book">Comic book</option>
-            <option value="Enhance">Enhance</option>
-            <option value="Neonpunk">Neonpunk</option>
-            <option value="Fantasy art">Fantasy art</option>
-            <option value="Digital Art">Digital Art</option>
-            <option value="Disney Charactor">Disney Charactor</option>
-            <option value="Cinematic">Cinematic</option>
-            <option value="(No style)">(No style)</option>
-          </select>
-        </div>
+      <form onSubmit={handleSubmit} className="space-y-4" encType="multipart/form-data">
 
         <div>
           <label className="block text-sm font-medium">Input Image</label>
@@ -182,24 +135,24 @@ export function Page() {
 
       {error && <p className="text-red-500">{error}</p>}
 
-      {imageUrls.length > 0 && (
+      {imageUrl && (
         <div className="flex flex-row gap-4 mt-8">
-          {imageUrls.map((url, index) => (
-            <div key={index} className="relative">
-              <Image src={url} alt={`Generated_${index + 1}`}
+            <div className="relative">
+              <Image
+                src={imageUrl}
+                alt={`Generated Image`}
                 width={300}
                 height={300}
                 className="object-cover rounded cursor-pointer"
-                onClick={() => setSelectedImage(url)}
+                onClick={() => setSelectedImage(imageUrl)}
               />
               <button
-                onClick={() => handleDownload(url)}
+                onClick={() => handleDownload(imageUrl)}
                 className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded"
               >
                 Download
               </button>
             </div>
-          ))}
         </div>
       )}
 

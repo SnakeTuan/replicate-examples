@@ -21,6 +21,7 @@ export default function RootLayout({
             <nav className="container mx-auto">
               <ul className="flex space-x-4">
                 <li><Link href="/" className="hover:text-gray-300">Home</Link></li>
+                <li><Link href="/restore-image" className="hover:text-gray-300">Restore Image</Link></li>
                 <li><Link href="/text-to-image" className="hover:text-gray-300">Text to Image</Link></li>
                 <li><Link href="/image-to-image" className="hover:text-gray-300">Image to Image</Link></li>
               </ul>
